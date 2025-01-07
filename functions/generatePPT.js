@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { OpenAIApi, Configuration } = require("openai");
+const OpenAI = require("openai");
 const PptxGenJS = require("pptxgenjs");
 
 exports.handler = async (event) => {
@@ -13,20 +13,19 @@ exports.handler = async (event) => {
       };
     }
 
-    // Initialize OpenAI
-    const configuration = new Configuration({
+    // Initialize OpenAI with the new SDK syntax
+    const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    const openai = new OpenAIApi(configuration);
 
-    // Generate text content for slides
-    const textResponse = await openai.createCompletion({
-      model: "text-davinci-003",
+    // Generate text content for slides using the new SDK syntax
+    const textResponse = await openai.completions.create({
+      model: "gpt-3.5-turbo-instruct", // Updated model (text-davinci-003 is deprecated)
       prompt: `Create a ${numSlides}-slide presentation outline for the topic: ${topic}. Each slide should include a title and content.`,
       max_tokens: 500,
     });
 
-    const slideContents = textResponse.data.choices[0].text
+    const slideContents = textResponse.choices[0].text
       .trim()
       .split(/\n\n+/) // Split into sections
       .map((chunk) => chunk.trim())
@@ -39,15 +38,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // Generate images for slides using OpenAI DALL·E
+    // Generate images for slides using OpenAI DALL·E with new SDK syntax
     const imagePromises = Array.from({ length: numSlides }, (_, i) =>
-      openai
-        .createImage({
-          prompt: `A visually appealing and relevant image for slide ${i + 1} on the topic "${topic}"`,
-          n: 1,
-          size: "512x512", // Smaller size to reduce file size
-        })
-        .then((response) => response.data.data[0].url)
+      openai.images.generate({
+        prompt: `A visually appealing and relevant image for slide ${i + 1} on the topic "${topic}"`,
+        n: 1,
+        size: "512x512", // Smaller size to reduce file size
+      })
+        .then((response) => response.data[0].url)
         .catch((error) => {
           console.error(`Error generating image for slide ${i + 1}:`, error);
           return null; // Use null as fallback
