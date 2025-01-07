@@ -103,10 +103,17 @@
                 status.style.backgroundColor = '#d4edda';
                 status.textContent = 'PowerPoint generated successfully!';
             } catch (error) {
-                console.error('Error:', error);
-                status.style.backgroundColor = '#f8d7da';
-                status.textContent = 'Error generating PowerPoint. Please try again.';
-            }
+    console.error('Error:', error);
+    let errorMessage = 'Error generating PowerPoint. ';
+    try {
+        const errorData = await response.json();
+        errorMessage += errorData.details || errorData.error || '';
+    } catch (e) {
+        errorMessage += 'Please check the console for details.';
+    }
+    status.style.backgroundColor = '#f8d7da';
+    status.textContent = errorMessage;
+}
         });
     </script>
 </body>
