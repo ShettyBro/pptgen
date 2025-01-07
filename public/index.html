@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerPoint Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, button {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>PowerPoint Generator</h1>
+    <form id="pptForm">
+        <div class="form-group">
+            <label for="topic">Presentation Topic:</label>
+            <input type="text" id="topic" required>
+        </div>
+        <div class="form-group">
+            <label for="numSlides">Number of Slides:</label>
+            <input type="number" id="numSlides" min="1" max="10" value="5" required>
+        </div>
+        <button type="submit">Generate PowerPoint</button>
+    </form>
+    <div id="status"></div>
+
+    <script>
+        document.getElementById('pptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.style.backgroundColor = '#fff3cd';
+            status.textContent = 'Generating PowerPoint... Please wait.';
+
+            const topic = document.getElementById('topic').value;
+            const numSlides = document.getElementById('numSlides').value;
+
+            try {
+                // Replace with your Netlify function URL
+                const response = await fetch('/.netlify/functions/generatePPT', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ topic, numSlides }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Get the filename from the Content-Disposition header if available
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const filename = contentDisposition
+                    ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                    : `${topic.replace(/\s+/g, '_')}.pptx`;
+
+                // Convert the response to blob
+                const blob = await response.blob();
+                
+                // Create a download link and trigger it
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                status.style.backgroundColor = '#d4edda';
+                status.textContent = 'PowerPoint generated successfully!';
+            } catch (error) {
+                console.error('Error:', error);
+                status.style.backgroundColor = '#f8d7da';
+                status.textContent = 'Error generating PowerPoint. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>
