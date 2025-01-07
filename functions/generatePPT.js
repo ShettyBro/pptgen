@@ -16,6 +16,7 @@ exports.handler = async (event) => {
     // Initialize OpenAI
     const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
     const openai = new OpenAIApi(configuration);
+
     
 
     // Generate text content for slides
